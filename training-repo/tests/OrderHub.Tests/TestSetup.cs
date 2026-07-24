@@ -23,7 +23,7 @@ public static class TestSetup
         new(new OrderRepository(db), new ProductRepository(db), new CustomerRepository(db));
 
     public static ProductService CreateProductService(OrderHubDbContext db) =>
-        new(new ProductRepository(db));
+        new(new ProductRepository(db), new OrderRepository(db));
 
     public static Customer AddCustomer(OrderHubDbContext db, CustomerTier tier = CustomerTier.Standard, string name = "測試客戶")
     {
@@ -52,5 +52,34 @@ public static class TestSetup
         db.Products.Add(product);
         db.SaveChanges();
         return product;
+    }
+
+    public static Order AddOrder(
+        OrderHubDbContext db,
+        Product product,
+        int quantity,
+        OrderStatus status,
+        DateTime createdAt,
+        Customer? customer = null)
+    {
+        customer ??= AddCustomer(db);
+        var order = new Order
+        {
+            CustomerId = customer.Id,
+            Status = status,
+            CreatedAt = createdAt,
+            Items =
+            {
+                new OrderItem
+                {
+                    ProductId = product.Id,
+                    Quantity = quantity,
+                    UnitPriceSnapshot = product.UnitPrice
+                }
+            }
+        };
+        db.Orders.Add(order);
+        db.SaveChanges();
+        return order;
     }
 }
